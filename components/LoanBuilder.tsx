@@ -93,44 +93,40 @@ export const LoanBuilder: React.FC<LoanBuilderProps> = ({ fund, onSave, onCancel
         // Effect will trigger regen
     };
 
-    const redistributeSchedule = (count: number) => {
-        if (count <= 0) return [];
-
-        const newSchedule = [];
-        const perInstallmentAmount = expectedTotalRepayment / count;
-        const intervalDays = Math.floor(durationDays / count);
-
-        let currentDate = new Date(startDate);
-
-        // Simple equal division
-        for (let i = 1; i <= count; i++) {
-            currentDate = new Date(startDate);
-            currentDate.setDate(currentDate.getDate() + (intervalDays * i));
-
-            newSchedule.push({
-                dueDate: currentDate.toISOString(),
-                amount: perInstallmentAmount,
-                principal: principal / count, // Approximate principal split
-                interest: (expectedTotalRepayment - principal) / count // Approximate interest split
-            });
-        }
-        return newSchedule;
-    };
-
     const addInstallment = () => {
         setIsCustomSchedule(true);
         const newCount = scheduleItems.length + 1;
-        setScheduleItems(redistributeSchedule(newCount));
+
+        // Distribute Amount and Dates
+        const amountPerInstallment = expectedTotalRepayment / newCount;
+        const daysPerInstallment = durationDays / newCount;
+        const start = new Date(startDate);
+
+        const newSchedule = Array.from({ length: newCount }, (_, i) => {
+            const dueDate = new Date(start);
+            dueDate.setDate(dueDate.getDate() + Math.round(daysPerInstallment * (i + 1)));
+
+            return {
+                dueDate: dueDate.toISOString(),
+                amount: parseFloat(amountPerInstallment.toFixed(2)), // Simple Rounding, might need adjustment on last item
+                principal: 0, // Placeholder
+                interest: 0
+            };
+        });
+
+        // Adjust last item for rounding differences
+        const currentSum = newSchedule.reduce((sum, item) => sum + item.amount, 0);
+        const diff = expectedTotalRepayment - currentSum;
+        if (newSchedule.length > 0 && Math.abs(diff) > 0.001) {
+            newSchedule[newSchedule.length - 1].amount += diff;
+        }
+
+        setScheduleItems(newSchedule);
     };
 
     const removeInstallment = (index: number) => {
         setIsCustomSchedule(true);
-        const newCount = scheduleItems.length - 1;
-        if (newCount < 1) {
-            alert("Cannot have fewer than 1 installment.");
-            return;
-        }
-        setScheduleItems(redistributeSchedule(newCount));
+        setScheduleItems(items => items.filter((_, i) => i !== index));
     };
 
     const handleSubmit = (e: React.FormEvent) => {

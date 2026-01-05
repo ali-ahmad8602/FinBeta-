@@ -37,27 +37,3 @@ export interface Fund {
     totalRaised: number;
     costOfCapitalRate: number; // % PA
 }
-
-export interface User {
-    id: string;
-    email: string;
-    name: string;
-    password?: string; // Optional in state, required in storage
-    role: 'ADMIN' | 'VIEWER';
-}
-
-export interface AuthState {
-    user: User | null;
-    isLoading: boolean;
-}
-
-export interface LoginCredentials {
-    email: string;
-    password: string;
-}
-
-export interface RegisterCredentials {
-    email: string;
-    password: string;
-    name: string;
-}
