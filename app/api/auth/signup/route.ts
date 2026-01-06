@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
             { status: 201 }
         );
     } catch (error: any) {
+        console.error('Signup error:', error);
+
         if (error.message === 'User already exists') {
             return NextResponse.json(
                 { error: 'User already exists' },
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { error: 'Internal server error', details: error.message },
             { status: 500 }
         );
     }

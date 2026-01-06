@@ -1,10 +1,10 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Fund, Loan } from '@/types';
 import { calculateFundMetrics, formatCurrency, formatPercentage } from '@/utils/analytics';
 // import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUpRight, ArrowDownRight, AlertTriangle, DollarSign, Wallet } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, AlertTriangle, DollarSign, Wallet, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 
 interface FundCardProps {
@@ -14,6 +14,57 @@ interface FundCardProps {
 
 export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
     const metrics = calculateFundMetrics(fund, loans);
+    const [showRaiseModal, setShowRaiseModal] = useState(false);
+    const [newCapital, setNewCapital] = useState('');
+    const [newRate, setNewRate] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    // Calculate preview of new totals
+    const previewTotals = () => {
+        const additional = Number(newCapital) || 0;
+        const rate = Number(newRate) || 0;
+        if (additional <= 0 || rate < 0) return null;
+
+        const totalCapital = fund.totalRaised + additional;
+        const wacc = (fund.totalRaised * fund.costOfCapitalRate + additional * rate) / totalCapital;
+
+        return { totalCapital, wacc };
+    };
+
+    const handleRaiseCapital = async () => {
+        const additional = Number(newCapital);
+        const rate = Number(newRate);
+
+        if (additional <= 0 || rate < 0) {
+            alert('Please enter valid amounts');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/funds/${fund.id}/raise-capital`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: additional, costOfCapitalRate: rate }),
+            });
+
+            if (res.ok) {
+                setShowRaiseModal(false);
+                setNewCapital('');
+                setNewRate('');
+                window.location.reload(); // Refresh to show new data
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Failed to raise capital');
+            }
+        } catch (error) {
+            alert('An error occurred');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const preview = previewTotals();
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all">
@@ -129,6 +180,108 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Raise Capital Button */}
+            <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+                <button
+                    onClick={() => setShowRaiseModal(true)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+                >
+                    <TrendingUp className="w-4 h-4" />
+                    Raise Additional Capital
+                </button>
+            </div>
+
+            {/* Raise Capital Modal */}
+            {showRaiseModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">Raise Additional Capital</h3>
+
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Additional Capital ($)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="1000"
+                                    value={newCapital}
+                                    onChange={(e) => setNewCapital(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                    placeholder="500000"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Cost of Capital (% PA)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.1"
+                                    value={newRate}
+                                    onChange={(e) => setNewRate(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                    placeholder="16"
+                                />
+                            </div>
+
+                            {/* Preview */}
+                            {preview && (
+                                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-2">
+                                    <p className="text-sm font-medium text-emerald-900">Preview After Raise:</p>
+                                    <div className="space-y-1 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Current Total:</span>
+                                            <span className="font-medium">{formatCurrency(fund.totalRaised)}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">New Raise:</span>
+                                            <span className="font-medium text-emerald-600">+{formatCurrency(Number(newCapital))}</span>
+                                        </div>
+                                        <div className="flex justify-between pt-2 border-t border-emerald-200">
+                                            <span className="text-gray-900 font-semibold">New Total:</span>
+                                            <span className="font-bold text-emerald-700">{formatCurrency(preview.totalCapital)}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Current CoC:</span>
+                                            <span className="font-medium">{fund.costOfCapitalRate.toFixed(2)}%</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-900 font-semibold">New WACC:</span>
+                                            <span className="font-bold text-emerald-700">{preview.wacc.toFixed(2)}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowRaiseModal(false);
+                                    setNewCapital('');
+                                    setNewRate('');
+                                }}
+                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                                disabled={loading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleRaiseCapital}
+                                disabled={loading || !preview}
+                                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? 'Processing...' : 'Confirm Raise'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
