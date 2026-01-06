@@ -48,6 +48,12 @@ export async function getLoansByUserId(userId: string): Promise<Loan[]> {
     return loans.find({ userId: new ObjectId(userId) }).toArray();
 }
 
+export async function getAllLoans(): Promise<Loan[]> {
+    const db = await getDatabase();
+    const loans = db.collection<Loan>('loans');
+    return loans.find({}).toArray();
+}
+
 export async function getLoansByFundId(fundId: string, userId: string): Promise<Loan[]> {
     const db = await getDatabase();
     const loans = db.collection<Loan>('loans');

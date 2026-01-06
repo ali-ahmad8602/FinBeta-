@@ -7,10 +7,12 @@ export interface User {
     email: string;
     password: string;
     name: string;
+    role: 'fund_manager' | 'cfo';
+    status: 'pending' | 'active' | 'rejected';
     createdAt: Date;
 }
 
-export async function createUser(email: string, password: string, name: string): Promise<User> {
+export async function createUser(email: string, password: string, name: string, role: 'fund_manager' | 'cfo' = 'fund_manager'): Promise<User> {
     const db = await getDatabase();
     const users = db.collection<User>('users');
 
@@ -27,6 +29,8 @@ export async function createUser(email: string, password: string, name: string):
         email,
         password: hashedPassword,
         name,
+        role,
+        status: 'pending',
         createdAt: new Date()
     };
 

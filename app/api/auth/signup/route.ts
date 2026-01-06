@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser } from '@/lib/models/User';
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
     try {
-        const { name, email, password } = await request.json();
+        const { name, email, password } = await req.json();
 
         if (!name || !email || !password) {
             return NextResponse.json(
@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const user = await createUser(email, password, name);
+        // Force role to be 'fund_manager' for public registration
+        const user = await createUser(email, password, name, 'fund_manager');
 
         return NextResponse.json(
             { message: 'User created successfully', userId: user._id },

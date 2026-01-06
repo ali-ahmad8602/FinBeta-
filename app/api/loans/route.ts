@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { getLoansByUserId, createLoan } from '@/lib/models/Loan';
+import { getLoansByUserId, createLoan, getAllLoans } from '@/lib/models/Loan';
 
 export async function GET(request: NextRequest) {
     try {
@@ -12,7 +12,12 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const fundId = searchParams.get('fundId');
 
-        const loans = await getLoansByUserId(session.user.id);
+        let loans;
+        if (session.user.role === 'cfo') {
+            loans = await getAllLoans();
+        } else {
+            loans = await getLoansByUserId(session.user.id);
+        }
 
         // Filter by fundId if provided
         const filteredLoans = fundId

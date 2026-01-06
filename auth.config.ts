@@ -22,12 +22,16 @@ export const authConfig: NextAuthConfig = {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
+                token.role = user.role;
+                token.status = user.status;
             }
             return token;
         },
         async session({ session, token }) {
             if (token && session.user) {
                 session.user.id = token.id as string;
+                session.user.role = token.role as 'fund_manager' | 'cfo';
+                session.user.status = token.status as 'pending' | 'active' | 'rejected';
             }
             return session;
         },
@@ -55,6 +59,8 @@ export const authConfig: NextAuthConfig = {
                     id: user._id!.toString(),
                     email: user.email,
                     name: user.name,
+                    role: user.role,
+                    status: user.status || 'pending',
                 };
             },
         }),

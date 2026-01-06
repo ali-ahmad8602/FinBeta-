@@ -30,6 +30,12 @@ export async function getFundsByUserId(userId: string): Promise<Fund[]> {
     return funds.find({ userId: new ObjectId(userId) }).toArray();
 }
 
+export async function getAllFunds(): Promise<Fund[]> {
+    const db = await getDatabase();
+    const funds = db.collection<Fund>('funds');
+    return funds.find({}).toArray();
+}
+
 export async function getFundById(fundId: string, userId: string): Promise<Fund | null> {
     const db = await getDatabase();
     const funds = db.collection<Fund>('funds');

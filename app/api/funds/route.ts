@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { getFundsByUserId, createFund } from '@/lib/models/Fund';
+import { getFundsByUserId, createFund, getAllFunds } from '@/lib/models/Fund';
 
 export async function GET() {
     try {
@@ -9,7 +9,12 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const funds = await getFundsByUserId(session.user.id);
+        let funds;
+        if (session.user.role === 'cfo') {
+            funds = await getAllFunds();
+        } else {
+            funds = await getFundsByUserId(session.user.id);
+        }
         return NextResponse.json(funds);
     } catch (error) {
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

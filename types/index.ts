@@ -33,6 +33,7 @@ export interface Loan {
 
 export interface Fund {
     id: string;
+    userId: string;
     name: string;
     totalRaised: number;
     costOfCapitalRate: number; // % PA

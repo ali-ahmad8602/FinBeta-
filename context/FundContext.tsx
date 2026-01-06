@@ -7,7 +7,7 @@ interface FundContextType {
     funds: Fund[];
     loans: Loan[];
     loading: boolean;
-    addFund: (fund: Omit<Fund, 'id'>) => Promise<void>;
+    addFund: (fund: Omit<Fund, 'id' | 'userId'>) => Promise<void>;
     addLoan: (loan: Omit<Loan, 'id'>) => Promise<void>;
     updateLoanStatus: (loanId: string, status: LoanStatus, defaultedAmount?: number) => Promise<void>;
     getFundLoans: (fundId: string) => Loan[];
@@ -54,7 +54,7 @@ export const FundProvider = ({ children }: { children: ReactNode }) => {
         refreshData();
     }, []);
 
-    const addFund = async (fundData: Omit<Fund, 'id'>) => {
+    const addFund = async (fundData: Omit<Fund, 'id' | 'userId'>) => {
         try {
             const res = await fetch('/api/funds', {
                 method: 'POST',
