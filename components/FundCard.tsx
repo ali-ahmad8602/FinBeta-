@@ -94,6 +94,11 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
                         <p className="text-lg font-semibold text-gray-900">{formatCurrency(metrics.totalRaised)}</p>
                     </div>
 
+                    <div className="pt-2 border-t border-gray-100">
+                        <p className="text-sm text-gray-500">Assets Under Management</p>
+                        <p className="text-lg font-bold text-indigo-700">{formatCurrency(metrics.aum)}</p>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-xs text-gray-500">Deployed</p>

@@ -10,6 +10,7 @@ export interface FundMetrics {
     totalExpenses: number; // Cost of Capital + Variable Costs
     totalAllocatedCostOfCapital: number;
     netYield: number;
+    aum: number;
     nplRatio: number; // Percentage
     globalCost: {
         annual: number;
@@ -115,6 +116,7 @@ export const calculateFundMetrics = (fund: Fund, loans: Loan[]): FundMetrics => 
         totalExpenses: totalAllocatedExpenses,
         totalAllocatedCostOfCapital, // New Variable
         netYield,
+        aum: fund.totalRaised + totalAllocatedCostOfCapital + netYield, // User Formula: Raised + Deployed Cost + Net Yield
         nplRatio,
         globalCost: {
             annual: annualGlobalCost,
