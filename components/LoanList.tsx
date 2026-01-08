@@ -6,6 +6,7 @@ import { formatCurrency } from '@/utils/analytics';
 import { BadgeCheck, AlertCircle, Clock, ChevronDown, ChevronUp, DollarSign, Calendar, Trash2 } from 'lucide-react';
 import { calculateInterest, calculateVariableCosts, calculateAllocatedCostOfCapital } from '@/utils/finance';
 import { calculateXIRR } from '@/utils/xirr';
+import { InfoIcon } from '@/components/ui/Tooltip';
 
 interface LoanListProps {
     loans: Loan[];
@@ -163,7 +164,10 @@ export const LoanList: React.FC<LoanListProps> = ({ loans, costOfCapitalRate, on
                                                         </div>
                                                         <div className="pt-2 border-t border-gray-100 mt-2">
                                                             <div className="flex justify-between items-center bg-gray-50 p-2 rounded">
-                                                                <span className="text-gray-600 font-medium">Net Yield</span>
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="text-gray-600 font-medium">Net Yield</span>
+                                                                    <InfoIcon content={`The projected profit from this loan after all costs.\n\nFormula: Interest + Processing Fee - Variable Costs - Cost of Capital\n\nThis shows the "deal economics" - what the loan was supposed to make, regardless of default status.`} />
+                                                                </div>
                                                                 <span className={`font-bold ${(totalInterest + (loan.processingFeeRate ? (loan.principal * (loan.processingFeeRate / 100)) : 0) - calculateVariableCosts(loan.principal, loan.variableCosts) - calculateAllocatedCostOfCapital(loan.principal, costOfCapitalRate, loan.durationDays)) >= 0
                                                                     ? 'text-emerald-700' : 'text-red-700'
                                                                     }`}>
@@ -176,7 +180,10 @@ export const LoanList: React.FC<LoanListProps> = ({ loans, costOfCapitalRate, on
                                                                 </span>
                                                             </div>
                                                             <div className="flex justify-between items-center p-2 rounded">
-                                                                <span className="text-gray-600 font-medium">Projected IRR</span>
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="text-gray-600 font-medium">Projected IRR</span>
+                                                                    <InfoIcon content={`The annualized return rate for this specific loan.\n\nWhy it's high: Short-duration loans have very high IRRs because capital returns quickly.\n\nExample: A 30-day loan with 10% total return = ~138% IRR annualized.`} />
+                                                                </div>
                                                                 <span className="font-bold text-indigo-700">
                                                                     {(() => {
                                                                         const cashFlows = [

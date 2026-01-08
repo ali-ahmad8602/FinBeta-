@@ -5,6 +5,7 @@ import { Fund, Loan } from '@/types';
 import { calculateFundMetrics, formatCurrency, formatPercentage } from '@/utils/analytics';
 // import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowUpRight, ArrowDownRight, AlertTriangle, DollarSign, Wallet, TrendingUp } from 'lucide-react';
+import { InfoIcon } from '@/components/ui/Tooltip';
 import Link from 'next/link';
 
 interface FundCardProps {
@@ -95,7 +96,10 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
                     </div>
 
                     <div className="pt-2 border-t border-gray-100">
-                        <p className="text-sm text-gray-500">Assets Under Management</p>
+                        <div className="flex items-center gap-1">
+                            <p className="text-sm text-gray-500">Assets Under Management</p>
+                            <InfoIcon content={`The total value of the fund including capital, costs, and projected profits.\n\nFormula: Total Raised + Allocated Cost (Deployed) + Net Yield\n\nThis represents the full economic value of your fund's operations.`} />
+                        </div>
                         <p className="text-lg font-bold text-indigo-700">{formatCurrency(metrics.aum)}</p>
                     </div>
 
@@ -119,7 +123,10 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
                     </div>
 
                     <div>
-                        <p className="text-sm text-gray-500">Net Yield</p>
+                        <div className="flex items-center gap-1">
+                            <p className="text-sm text-gray-500">Net Yield</p>
+                            <InfoIcon content={`The projected profit after all expenses and losses.\n\nFormula: Projected Income - Total Expenses - NPL Losses\n\nThis is a cash-basis calculation showing actual expected profit.`} />
+                        </div>
                         <div className="flex items-baseline gap-2">
                             <p className={`text-lg font-semibold ${metrics.netYield >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                                 {formatCurrency(metrics.netYield)}
@@ -128,7 +135,10 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
                     </div>
 
                     <div>
-                        <p className="text-sm text-gray-500">Portfolio IRR</p>
+                        <div className="flex items-center gap-1">
+                            <p className="text-sm text-gray-500">Portfolio IRR</p>
+                            <InfoIcon content={`The annualized return rate of all deployed capital, accounting for time value of money.\n\nWhy it matters: A 10% profit in 1 month = ~138% IRR because you can redeploy that capital 12 times per year.`} />
+                        </div>
                         <p className="text-lg font-bold text-indigo-700">{formatPercentage(metrics.portfolioIRR)}</p>
                     </div>
 
@@ -176,7 +186,10 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
                     </div>
 
                     <div>
-                        <p className="text-sm text-gray-500">NPL Volume</p>
+                        <div className="flex items-center gap-1">
+                            <p className="text-sm text-gray-500">NPL Volume</p>
+                            <InfoIcon content={`Non-Performing Loans - the total repayable amount lost to defaults.\n\nFormula: Sum of (Principal + Interest + Fees) for all defaulted loans.`} />
+                        </div>
                         <p className="text-lg font-semibold text-gray-900">{formatCurrency(metrics.nplVolume)}</p>
                     </div>
 
