@@ -1,5 +1,6 @@
 import { Fund, Loan } from '@/types';
 import { calculateAllocatedCostOfCapital, calculateVariableCosts, calculateInterest } from './finance';
+import { calculateXIRR, CashFlow } from './xirr';
 
 export interface FundMetrics {
     totalRaised: number;
@@ -11,6 +12,7 @@ export interface FundMetrics {
     totalAllocatedCostOfCapital: number;
     netYield: number;
     aum: number;
+    portfolioIRR: number; // Percentage
     nplRatio: number; // Percentage
     globalCost: {
         annual: number;
@@ -107,6 +109,28 @@ export const calculateFundMetrics = (fund: Fund, loans: Loan[]): FundMetrics => 
     // Net Yield = Income - Expenses - NPL Losses (Principal Only to remain unaffected)
     const netYield = projectedIncome - totalAllocatedExpenses - nplPrincipalLoss;
 
+    // Portfolio IRR Calculation (Projected)
+    // Aggregate cash flows from ALL loans (Active, Closed, Defaulted - projected schedule)
+    const allCashFlows: CashFlow[] = [];
+    fundLoans.forEach(loan => {
+        // 1. Outflow: Principal on Start Date
+        allCashFlows.push({ amount: -loan.principal, date: new Date(loan.startDate) });
+
+        // 2. Inflows: Repayment Schedule
+        if (loan.installments && loan.installments.length > 0) {
+            loan.installments.forEach(inst => {
+                allCashFlows.push({ amount: inst.amount, date: new Date(inst.dueDate) });
+            });
+        } else {
+            // Bullet Loan Fallback
+            const totalRepayable = loan.principal + calculateInterest(loan.principal, loan.interestRate, loan.durationDays);
+            const dueDate = new Date(new Date(loan.startDate).getTime() + loan.durationDays * 24 * 60 * 60 * 1000);
+            allCashFlows.push({ amount: totalRepayable, date: dueDate });
+        }
+    });
+
+    const portfolioIRR = calculateXIRR(allCashFlows) || 0;
+
     return {
         totalRaised: fund.totalRaised,
         deployedCapital,
@@ -118,6 +142,7 @@ export const calculateFundMetrics = (fund: Fund, loans: Loan[]): FundMetrics => 
         netYield,
         aum: fund.totalRaised + totalAllocatedCostOfCapital + netYield, // User Formula: Raised + Deployed Cost + Net Yield
         nplRatio,
+        portfolioIRR,
         globalCost: {
             annual: annualGlobalCost,
             monthly: monthlyGlobalCost,

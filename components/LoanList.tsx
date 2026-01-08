@@ -5,6 +5,7 @@ import { Loan, LoanStatus } from '@/types';
 import { formatCurrency } from '@/utils/analytics';
 import { BadgeCheck, AlertCircle, Clock, ChevronDown, ChevronUp, DollarSign, Calendar, Trash2 } from 'lucide-react';
 import { calculateInterest, calculateVariableCosts, calculateAllocatedCostOfCapital } from '@/utils/finance';
+import { calculateXIRR } from '@/utils/xirr';
 
 interface LoanListProps {
     loans: Loan[];
@@ -172,6 +173,20 @@ export const LoanList: React.FC<LoanListProps> = ({ loans, costOfCapitalRate, on
                                                                         calculateVariableCosts(loan.principal, loan.variableCosts) -
                                                                         calculateAllocatedCostOfCapital(loan.principal, costOfCapitalRate, loan.durationDays)
                                                                     )}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center p-2 rounded">
+                                                                <span className="text-gray-600 font-medium">Projected IRR</span>
+                                                                <span className="font-bold text-indigo-700">
+                                                                    {(() => {
+                                                                        const cashFlows = [
+                                                                            { amount: -loan.principal, date: new Date(loan.startDate) },
+                                                                            ...(loan.installments?.map(i => ({ amount: i.amount, date: new Date(i.dueDate) })) ||
+                                                                                [{ amount: loan.principal + totalInterest, date: new Date(new Date(loan.startDate).getTime() + loan.durationDays * 24 * 60 * 60 * 1000) }])
+                                                                        ];
+                                                                        const irr = calculateXIRR(cashFlows);
+                                                                        return irr ? `${irr.toFixed(2)}%` : 'N/A';
+                                                                    })()}
                                                                 </span>
                                                             </div>
                                                         </div>
