@@ -136,10 +136,18 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
 
                     <div>
                         <div className="flex items-center gap-1">
-                            <p className="text-sm text-gray-500">Portfolio IRR</p>
-                            <InfoIcon content={`The annualized return rate of all deployed capital, accounting for time value of money.\n\nWhy it matters: A 10% profit in 1 month = ~138% IRR because you can redeploy that capital 12 times per year.`} />
+                            <p className="text-sm text-gray-500">Portfolio IRR (Realized)</p>
+                            <InfoIcon content={`The annualized return rate of all deployed capital based on ACTUAL outcomes.\n\nThis accounts for:\n• Defaulted loans (treated as total losses)\n• Time value of money\n\nA 10% profit in 1 month = ~138% IRR annualized.`} />
                         </div>
                         <p className="text-lg font-bold text-indigo-700">{formatPercentage(metrics.portfolioIRR)}</p>
+                    </div>
+
+                    <div>
+                        <div className="flex items-center gap-1">
+                            <p className="text-sm text-gray-500">Portfolio IRR (Projected)</p>
+                            <InfoIcon content={`The annualized return rate if all loans perform as projected.\n\nThis shows:\n• Deal economics (ignoring defaults)\n• What the portfolio SHOULD earn\n\nCompare this to Realized IRR to see the impact of defaults.`} />
+                        </div>
+                        <p className="text-lg font-bold text-gray-600">{formatPercentage(metrics.projectedPortfolioIRR)}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

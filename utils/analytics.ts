@@ -12,7 +12,8 @@ export interface FundMetrics {
     totalAllocatedCostOfCapital: number;
     netYield: number;
     aum: number;
-    portfolioIRR: number; // Percentage
+    portfolioIRR: number; // Percentage - Realized IRR (actual outcomes)
+    projectedPortfolioIRR: number; // Percentage - Projected IRR (deal economics)
     nplRatio: number; // Percentage
     globalCost: {
         annual: number;
@@ -109,27 +110,52 @@ export const calculateFundMetrics = (fund: Fund, loans: Loan[]): FundMetrics => 
     // Net Yield = Income - Expenses - NPL Losses (Principal Only to remain unaffected)
     const netYield = projectedIncome - totalAllocatedExpenses - nplPrincipalLoss;
 
-    // Portfolio IRR Calculation (Projected)
-    // Aggregate cash flows from ALL loans (Active, Closed, Defaulted - projected schedule)
-    const allCashFlows: CashFlow[] = [];
+    // Portfolio IRR Calculation - Realized (actual outcomes)
+    // Treats defaulted loans as losses (no inflows)
+    const realizedCashFlows: CashFlow[] = [];
     fundLoans.forEach(loan => {
         // 1. Outflow: Principal on Start Date
-        allCashFlows.push({ amount: -loan.principal, date: new Date(loan.startDate) });
+        realizedCashFlows.push({ amount: -loan.principal, date: new Date(loan.startDate) });
 
-        // 2. Inflows: Repayment Schedule
+        // 2. Inflows: Only for non-defaulted loans
+        if (loan.status !== 'DEFAULTED') {
+            if (loan.installments && loan.installments.length > 0) {
+                loan.installments.forEach(inst => {
+                    realizedCashFlows.push({ amount: inst.amount, date: new Date(inst.dueDate) });
+                });
+            } else {
+                // Bullet Loan Fallback
+                const totalRepayable = loan.principal + calculateInterest(loan.principal, loan.interestRate, loan.durationDays);
+                const dueDate = new Date(new Date(loan.startDate).getTime() + loan.durationDays * 24 * 60 * 60 * 1000);
+                realizedCashFlows.push({ amount: totalRepayable, date: dueDate });
+            }
+        }
+        // For DEFAULTED loans: no inflows added = total loss reflected in IRR
+    });
+
+    const portfolioIRR = calculateXIRR(realizedCashFlows) || 0;
+
+    // Projected Portfolio IRR (deal economics - ignores defaults)
+    // Shows what IRR would be if all loans perform as projected
+    const projectedCashFlows: CashFlow[] = [];
+    fundLoans.forEach(loan => {
+        // 1. Outflow: Principal on Start Date
+        projectedCashFlows.push({ amount: -loan.principal, date: new Date(loan.startDate) });
+
+        // 2. Inflows: Use projected schedule regardless of status
         if (loan.installments && loan.installments.length > 0) {
             loan.installments.forEach(inst => {
-                allCashFlows.push({ amount: inst.amount, date: new Date(inst.dueDate) });
+                projectedCashFlows.push({ amount: inst.amount, date: new Date(inst.dueDate) });
             });
         } else {
             // Bullet Loan Fallback
             const totalRepayable = loan.principal + calculateInterest(loan.principal, loan.interestRate, loan.durationDays);
             const dueDate = new Date(new Date(loan.startDate).getTime() + loan.durationDays * 24 * 60 * 60 * 1000);
-            allCashFlows.push({ amount: totalRepayable, date: dueDate });
+            projectedCashFlows.push({ amount: totalRepayable, date: dueDate });
         }
     });
 
-    const portfolioIRR = calculateXIRR(allCashFlows) || 0;
+    const projectedPortfolioIRR = calculateXIRR(projectedCashFlows) || 0;
 
     return {
         totalRaised: fund.totalRaised,
@@ -143,6 +169,7 @@ export const calculateFundMetrics = (fund: Fund, loans: Loan[]): FundMetrics => 
         aum: fund.totalRaised + totalAllocatedCostOfCapital + netYield, // User Formula: Raised + Deployed Cost + Net Yield
         nplRatio,
         portfolioIRR,
+        projectedPortfolioIRR,
         globalCost: {
             annual: annualGlobalCost,
             monthly: monthlyGlobalCost,
