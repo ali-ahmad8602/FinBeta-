@@ -3,7 +3,7 @@
 import React from 'react';
 import { Fund, Loan } from '@/types';
 import { calculateCashFlowForecast } from '@/utils/cashflow';
-import { formatCurrency } from '@/utils/analytics';
+import { formatCurrency, calculateRealizedImYield } from '@/utils/analytics';
 import { Calendar, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 
@@ -56,6 +56,17 @@ export const CashFlowForecast: React.FC<CashFlowForecastProps> = ({ fund, loans 
                     </div>
                     <p className="text-2xl font-bold text-orange-600">{formatCurrency(summary.lowestAvailable)}</p>
                     <p className="text-xs text-gray-500 mt-1">{new Date(summary.lowestDate).toLocaleDateString()}</p>
+                </div>
+
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <div className="flex items-center gap-2 text-gray-500 mb-2">
+                        <DollarSign className="w-4 h-4" />
+                        <span className="text-xs font-medium uppercase">Realized IM Yield</span>
+                    </div>
+                    <p className="text-2xl font-bold text-emerald-600">
+                        {formatCurrency(calculateRealizedImYield(fund, loans))}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">Procured Till Date</p>
                 </div>
             </div>
 

@@ -196,3 +196,57 @@ export const formatCurrency = (amount: number) => {
 export const formatPercentage = (rate: number) => {
     return `${rate.toFixed(2)}%`;
 };
+
+/**
+ * Calculate Realized IM Yield (Yield from Closed/Matured loans)
+ */
+export const calculateRealizedImYield = (fund: Fund, loans: Loan[]): number => {
+    let totalRealizedYield = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const relevantLoans = loans.filter(l => {
+        if (l.fundId !== fund.id) return false;
+        if (l.status === 'CLOSED') return true;
+        if (l.status === 'ACTIVE') {
+            // Check if final installment date is passed
+            if (l.installments && l.installments.length > 0) {
+                const lastDate = new Date(l.installments[l.installments.length - 1].dueDate);
+                return lastDate <= today;
+            } else {
+                // Bullet
+                const maturityDate = new Date(l.startDate);
+                maturityDate.setDate(maturityDate.getDate() + l.durationDays);
+                return maturityDate <= today;
+            }
+        }
+        return false;
+    });
+
+    relevantLoans.forEach(loan => {
+        const totalInterest = calculateInterest(loan.principal, loan.interestRate, loan.durationDays);
+        const processingFee = loan.processingFeeRate ? (loan.principal * (loan.processingFeeRate / 100)) : 0;
+
+        // Yield = Interest + Fee - (VarCosts + CoC)
+        // Or in terms of Repayment: (Principal + Interest + Fee) - (Principal + VarCosts + CoC)
+        const totalIncome = totalInterest + processingFee;
+
+        const totalVarCosts = calculateVariableCosts(loan.principal, loan.variableCosts);
+        const totalCoC = calculateAllocatedCostOfCapital(loan.principal, fund.costOfCapitalRate, loan.durationDays);
+
+        // Net Yield = Income - Expenses
+        const netYield = Math.max(0, totalIncome - (totalVarCosts + totalCoC));
+
+        // To keep it consistent with the "Repayment - BreakEven" logic:
+        // Repayment = Principal + Interest + Fee (Assuming Fee is part of the economics, even if upfront)
+        // BreakEven = Principal + VarCosts + CoC
+        // Surplus = Repayment - BreakEven
+        // = (Principal + Interest + Fee) - (Principal + VarCosts + CoC)
+        // = Interest + Fee - VarCosts - CoC
+        // This matches the user's formula.
+
+        totalRealizedYield += netYield;
+    });
+
+    return totalRealizedYield;
+};

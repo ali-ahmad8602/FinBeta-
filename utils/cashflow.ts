@@ -53,16 +53,40 @@ export function getAllRepaymentEvents(loans: Loan[], fund: Fund): CashFlowEvent[
 
                 // Only include future repayments
                 if (dueDate >= today) {
-                    const principalPortion = inst.principalComponent || (loan.principal / loan.installments.length); // Fallback if not stored
+                    const isLastInstallment = idx === loan.installments.length - 1;
 
-                    // Proportional recovery
-                    const portionRatio = principalPortion / loan.principal;
-                    const totalVarCost = calculateVariableCosts(loan.principal, loan.variableCosts);
-                    const varRecovery = totalVarCost * portionRatio;
+                    // WATERFALL LOGIC for Future Events
+                    const totalInterest = calculateInterest(loan.principal, loan.interestRate, loan.durationDays);
+                    const processingFee = loan.processingFeeRate ? (loan.principal * (loan.processingFeeRate / 100)) : 0;
 
-                    // CoC for this period (approximate based on interest fraction or time)
+                    const totalExpectedRepayment = loan.principal + totalInterest + processingFee;
                     const totalAllocatedCoC = calculateAllocatedCostOfCapital(loan.principal, fund.costOfCapitalRate, loan.durationDays);
-                    const cocRecovery = totalAllocatedCoC * portionRatio;
+                    const totalVarCosts = calculateVariableCosts(loan.principal, loan.variableCosts);
+                    const totalBreakEven = loan.principal + totalVarCosts + totalAllocatedCoC;
+
+                    const totalImYield = Math.max(0, totalExpectedRepayment - totalBreakEven);
+
+                    let imYieldInThisEvent = 0;
+                    if (isLastInstallment) {
+                        imYieldInThisEvent = totalImYield;
+                    }
+
+                    // Determine how much of this installment covers break-even components
+                    // If it's the last installment, we remove the yield part first.
+                    // Note: This logic assumes the Yield is paid at the END.
+
+                    const amountForBreakEven = inst.amount - imYieldInThisEvent;
+
+                    // Distribute amountForBreakEven proportionally to Principal, VarCost, CoC
+                    // The ratio is based on the TOTAL expected costs.
+                    const principalRatio = loan.principal / totalBreakEven;
+                    const varCostRatio = totalVarCosts / totalBreakEven;
+                    const cocRatio = totalAllocatedCoC / totalBreakEven;
+
+                    // Fallback to simpler logic if ratios don't sum well or break even is 0 (unlikely)
+                    const principalPortion = amountForBreakEven * principalRatio;
+                    const varRecovery = amountForBreakEven * varCostRatio;
+                    const cocRecovery = amountForBreakEven * cocRatio;
 
                     events.push({
                         date: dueDate,
@@ -75,8 +99,9 @@ export function getAllRepaymentEvents(loans: Loan[], fund: Fund): CashFlowEvent[
                         description: `${loan.borrowerName} - Installment ${idx + 1}/${loan.installments.length}`,
                         principalPortion: principalPortion,
                         variableCostRecovery: varRecovery,
-                        cocRecovery: cocRecovery
-                    });
+                        cocRecovery: cocRecovery,
+                        imYield: imYieldInThisEvent
+                    } as any); // Type assertion until interface is updated if needed
                 }
             });
         } else {
@@ -87,10 +112,21 @@ export function getAllRepaymentEvents(loans: Loan[], fund: Fund): CashFlowEvent[
             // Only include if maturity is in the future
             if (maturityDate >= today) {
                 const totalInterest = calculateInterest(loan.principal, loan.interestRate, loan.durationDays);
-                const totalRepayment = loan.principal + totalInterest;
+                const processingFee = loan.processingFeeRate ? (loan.principal * (loan.processingFeeRate / 100)) : 0;
+
+                const totalRepayment = loan.principal + totalInterest + processingFee;
 
                 const totalVarCost = calculateVariableCosts(loan.principal, loan.variableCosts);
                 const totalAllocatedCoC = calculateAllocatedCostOfCapital(loan.principal, fund.costOfCapitalRate, loan.durationDays);
+
+                const totalBreakEven = loan.principal + totalVarCost + totalAllocatedCoC;
+                const totalImYield = Math.max(0, totalRepayment - totalBreakEven);
+
+                const amountForBreakEven = totalRepayment - totalImYield;
+
+                const principalRatio = loan.principal / totalBreakEven;
+                const varCostRatio = totalVarCost / totalBreakEven;
+                const cocRatio = totalAllocatedCoC / totalBreakEven;
 
                 events.push({
                     date: maturityDate,
@@ -99,10 +135,11 @@ export function getAllRepaymentEvents(loans: Loan[], fund: Fund): CashFlowEvent[
                     loanId: loan.id,
                     borrowerName: loan.borrowerName,
                     description: `${loan.borrowerName} - Bullet Repayment`,
-                    principalPortion: loan.principal,
-                    variableCostRecovery: totalVarCost,
-                    cocRecovery: totalAllocatedCoC
-                });
+                    principalPortion: amountForBreakEven * principalRatio,
+                    variableCostRecovery: amountForBreakEven * varCostRatio,
+                    cocRecovery: amountForBreakEven * cocRatio,
+                    imYield: totalImYield
+                } as any);
             }
         }
     }
