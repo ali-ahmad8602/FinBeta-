@@ -47,3 +47,18 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
     return bcrypt.compare(password, hashedPassword);
 }
+
+export async function updatePassword(userId: string, newPassword: string): Promise<boolean> {
+    const db = await getDatabase();
+    const users = db.collection<User>('users');
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const result = await users.updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { password: hashedPassword } }
+    );
+
+    return result.modifiedCount > 0;
+}

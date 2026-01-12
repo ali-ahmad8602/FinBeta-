@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useFund } from '@/context/FundContext';
 import { FundCard } from '@/components/FundCard';
-import { Plus, LogOut, Users, PieChart } from 'lucide-react';
+import { Plus, LogOut, Users, PieChart, Settings } from 'lucide-react';
 import { Fund } from '@/types';
 import { useSession, signOut } from 'next-auth/react';
+import Link from 'next/link';
 
 interface Manager {
   _id: string;
@@ -176,6 +177,13 @@ export default function Dashboard() {
           )}
         </div>
         <div className="flex gap-3">
+          <Link
+            href="/settings"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+            Settings
+          </Link>
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
             className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
