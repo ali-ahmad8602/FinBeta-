@@ -5,7 +5,7 @@ export interface IActivityLog {
     _id?: ObjectId;
     userId: string;
     userName: string;
-    userRole: 'CFO' | 'FUND_MANAGER';
+    userRole: 'CRO' | 'FUND_MANAGER';
     userEmail: string;
     actionType: string;
     actionDescription: string;

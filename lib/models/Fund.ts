@@ -40,8 +40,8 @@ export async function getFundById(fundId: string, userId: string, userRole?: str
     const db = await getDatabase();
     const funds = db.collection<Fund>('funds');
 
-    // CFO can access any fund
-    if (userRole === 'cfo') {
+    // CRO can access any fund
+    if (userRole === 'cro') {
         return funds.findOne({ _id: new ObjectId(fundId) });
     }
 
@@ -54,7 +54,7 @@ export async function updateFund(fundId: string, userId: string, updates: Partia
     const funds = db.collection<Fund>('funds');
 
     let filter;
-    if (userRole === 'cfo') {
+    if (userRole === 'cro') {
         filter = { _id: new ObjectId(fundId) };
     } else {
         filter = { _id: new ObjectId(fundId), userId: new ObjectId(userId) };
@@ -69,7 +69,7 @@ export async function deleteFund(fundId: string, userId: string, userRole?: stri
     const funds = db.collection<Fund>('funds');
 
     let filter;
-    if (userRole === 'cfo') {
+    if (userRole === 'cro') {
         filter = { _id: new ObjectId(fundId) };
     } else {
         filter = { _id: new ObjectId(fundId), userId: new ObjectId(userId) };

@@ -74,7 +74,7 @@ export default function FundDetailsPage() {
         if (actionType.includes('CREATE')) return 'bg-green-100 text-green-700';
         if (actionType.includes('UPDATE')) return 'bg-blue-100 text-blue-700';
         if (actionType.includes('DELETE')) return 'bg-red-100 text-red-700';
-        if (actionType.includes('CFO_OVERRIDE')) return 'bg-purple-100 text-purple-700';
+        if (actionType.includes('CRO_OVERRIDE')) return 'bg-purple-100 text-purple-700';
         if (actionType.includes('STATUS_CHANGE')) return 'bg-yellow-100 text-yellow-700';
         if (actionType.includes('CAPITAL_RAISE')) return 'bg-emerald-100 text-emerald-700';
         return 'bg-gray-100 text-gray-700';
@@ -184,7 +184,7 @@ export default function FundDetailsPage() {
                     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                         <div className="p-4 border-b border-gray-200 bg-gray-50">
                             <h3 className="text-lg font-semibold text-gray-900">Activity Logs for {fund.name}</h3>
-                            <p className="text-sm text-gray-500 mt-1">View all activities for this fund including CFO overrides</p>
+                            <p className="text-sm text-gray-500 mt-1">View all activities for this fund including CRO overrides</p>
                         </div>
                         {logsLoading ? (
                             <div className="p-8 text-center text-gray-500">Loading logs...</div>
@@ -210,7 +210,7 @@ export default function FundDetailsPage() {
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="text-sm font-medium text-gray-900">{log.userName}</div>
                                                     <div className="text-xs text-gray-500">
-                                                        {log.userRole === 'CFO' ? 'CFO' : 'Fund Manager'}
+                                                        {log.userRole === 'CRO' ? 'CRO' : 'Fund Manager'}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">

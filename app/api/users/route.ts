@@ -6,7 +6,7 @@ import { User } from '@/lib/models/User';
 export async function GET(request: NextRequest) {
     try {
         const session = await auth();
-        if (!session?.user?.id || session.user.role !== 'cfo') {
+        if (!session?.user?.id || session.user.role !== 'cro') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

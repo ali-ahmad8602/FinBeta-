@@ -31,7 +31,7 @@ export default function Dashboard() {
   const [newFundRate, setNewFundRate] = useState('14');
 
   const fetchManagers = () => {
-    if (session?.user?.role === 'cfo') {
+    if (session?.user?.role === 'cro') {
       fetch('/api/users')
         .then(res => res.json())
         .then(data => setManagers(data))
@@ -133,9 +133,9 @@ export default function Dashboard() {
     );
   }
 
-  const isCFO = session?.user?.role === 'cfo';
+  const isCRO = session?.user?.role === 'cro';
 
-  const filteredFunds = isCFO && selectedManager
+  const filteredFunds = isCRO && selectedManager
     ? funds.filter(f => f.userId.toString() === selectedManager)
     : funds;
 
@@ -166,13 +166,13 @@ export default function Dashboard() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {isCFO ? 'Organization Overview' : 'Portfolio Overview'}
+            {isCRO ? 'Organization Overview' : 'Portfolio Overview'}
           </h1>
           <p className="text-gray-500">
-            {isCFO ? 'Monitor all funds and managers.' : 'Manage your funds, capital deployment, and risk.'}
+            {isCRO ? 'Monitor all funds and managers.' : 'Manage your funds, capital deployment, and risk.'}
           </p>
           {session?.user && (
-            <p className="text-sm text-gray-400 mt-1">Welcome, {session.user.name} ({isCFO ? 'CFO' : 'Fund Manager'})</p>
+            <p className="text-sm text-gray-400 mt-1">Welcome, {session.user.name} ({isCRO ? 'CRO' : 'Fund Manager'})</p>
           )}
         </div>
         <div className="flex gap-3">
@@ -183,7 +183,7 @@ export default function Dashboard() {
             <LogOut className="w-4 h-4" />
             Logout
           </button>
-          {!isCFO && (
+          {!isCRO && (
             <button
               onClick={() => setIsModalOpen(true)}
               className="inline-flex items-center gap-2 px-4 py-2 btn-primary rounded-lg shadow-md"
@@ -195,7 +195,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {isCFO && (
+      {isCRO && (
         <div className="flex space-x-4 mb-6 border-b border-gray-200 pb-1">
           <button
             onClick={() => { setViewMode('overview'); setSelectedManager(null); }}
@@ -220,14 +220,14 @@ export default function Dashboard() {
         </div>
       )}
 
-      {viewMode === 'managers' && isCFO ? (
+      {viewMode === 'managers' && isCRO ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {managers.map(manager => (
             <div key={manager._id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-4 cursor-pointer" onClick={() => { if (manager.status !== 'pending') { setSelectedManager(manager._id); setViewMode('overview'); } }}>
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${manager.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
-                    manager.status === 'rejected' ? 'bg-red-100 text-red-600' :
-                      'bg-gray-100 text-gray-600'
+                  manager.status === 'rejected' ? 'bg-red-100 text-red-600' :
+                    'bg-gray-100 text-gray-600'
                   }`}>
                   {manager.status === 'rejected' ? <LogOut className="w-5 h-5" /> : manager.name.charAt(0)}
                 </div>
@@ -248,11 +248,11 @@ export default function Dashboard() {
                     Approve as FM
                   </button>
                   <button
-                    onClick={() => handleApproveUser(manager._id, 'cfo')}
+                    onClick={() => handleApproveUser(manager._id, 'cro')}
                     className="flex-1 text-xs py-2 rounded hover:bg-gray-50 transition-colors"
                     style={{ border: '1px solid var(--primary-purple)', color: 'var(--primary-purple)' }}
                   >
-                    Approve as CFO
+                    Approve as CRO
                   </button>
                 </div>
               ) : manager.status === 'rejected' ? (
@@ -294,7 +294,7 @@ export default function Dashboard() {
           {displayedFunds.length === 0 ? (
             <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
               <p className="text-gray-500 mb-4">No funds active.</p>
-              {!isCFO && (
+              {!isCRO && (
                 <button
                   onClick={() => setIsModalOpen(true)}
                   className="text-blue-600 font-medium hover:underline"
@@ -307,7 +307,7 @@ export default function Dashboard() {
             <>
               {displayedFunds.map(fund => (
                 <div key={fund.id}>
-                  {isCFO && <div className="text-xs text-gray-400 mb-1">Managed by: {getManagerName(fund.userId.toString())}</div>}
+                  {isCRO && <div className="text-xs text-gray-400 mb-1">Managed by: {getManagerName(fund.userId.toString())}</div>}
                   <FundCard
                     fund={fund}
                     loans={loans.filter(l => l.fundId === fund.id)}

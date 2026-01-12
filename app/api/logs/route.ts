@@ -18,9 +18,9 @@ export async function GET(request: NextRequest) {
 
         let query: any = {};
 
-        // CFO sees all logs
-        // Fund Managers see only their own activities + CFO actions on their funds
-        if (session.user.role !== 'cfo') {
+        // CRO sees all logs
+        // Fund Managers see only their own activities + CRO actions on their funds
+        if (session.user.role !== 'cro') {
             // Get all fund IDs owned by this fund manager
             const userFunds = await getFundsByUserId(session.user.id);
             const userFundIds = userFunds.map(f => f._id?.toString());
@@ -28,9 +28,9 @@ export async function GET(request: NextRequest) {
             query.$or = [
                 // Their own activities
                 { userId: session.user.id },
-                // CFO actions on their specific funds
+                // CRO actions on their specific funds
                 {
-                    userRole: 'CFO',
+                    userRole: 'CRO',
                     fundId: { $in: userFundIds }
                 }
             ];

@@ -9,8 +9,8 @@ export async function DELETE(
 ) {
     try {
         const session = await auth();
-        // Only CFO can deactivate users
-        if (!session?.user?.id || session.user.role !== 'cfo') {
+        // Only CRO can deactivate users
+        if (!session?.user?.id || session.user.role !== 'cro') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

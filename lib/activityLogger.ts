@@ -4,7 +4,7 @@ import ActivityLog, { IActivityLog } from './models/ActivityLog';
 interface LogActivityParams {
     userId: string;
     userName: string;
-    userRole: 'CFO' | 'FUND_MANAGER';
+    userRole: 'CRO' | 'FUND_MANAGER';
     userEmail: string;
     actionType: string;
     actionDescription: string;
@@ -72,9 +72,9 @@ export const ActionTypes = {
     USER_APPROVE: 'USER_APPROVE',
     USER_REJECT: 'USER_REJECT',
 
-    // CFO Override actions
-    CFO_OVERRIDE_FUND: 'CFO_OVERRIDE_FUND',
-    CFO_OVERRIDE_LOAN: 'CFO_OVERRIDE_LOAN',
+    // CRO Override actions
+    CRO_OVERRIDE_FUND: 'CRO_OVERRIDE_FUND',
+    CRO_OVERRIDE_LOAN: 'CRO_OVERRIDE_LOAN',
 } as const;
 
 /**
@@ -84,7 +84,7 @@ export function getUserInfoForLog(session: any) {
     return {
         userId: session.user.id,
         userName: session.user.name || session.user.email,
-        userRole: (session.user.role === 'cfo' ? 'CFO' : 'FUND_MANAGER') as 'CFO' | 'FUND_MANAGER',
+        userRole: (session.user.role === 'cro' ? 'CRO' : 'FUND_MANAGER') as 'CRO' | 'FUND_MANAGER',
         userEmail: session.user.email,
     };
 }

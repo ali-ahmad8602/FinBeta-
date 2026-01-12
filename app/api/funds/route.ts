@@ -10,7 +10,7 @@ export async function GET() {
         }
 
         let funds;
-        if (session.user.role === 'cfo') {
+        if (session.user.role === 'cro') {
             funds = await getAllFunds();
         } else {
             funds = await getFundsByUserId(session.user.id);

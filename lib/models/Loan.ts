@@ -34,9 +34,9 @@ export async function createLoan(userId: string, loanData: Omit<Loan, '_id' | 'u
 
     const { fundId, ...restLoanData } = loanData;
 
-    // If CFO is creating the loan, assign it to the fund owner instead
+    // If CRO is creating the loan, assign it to the fund owner instead
     let loanOwnerId = new ObjectId(userId);
-    if (userRole === 'cfo') {
+    if (userRole === 'cro') {
         const fund = await funds.findOne({ _id: new ObjectId(fundId as any) });
         if (fund) {
             loanOwnerId = fund.userId;
@@ -70,8 +70,8 @@ export async function getLoansByFundId(fundId: string, userId: string, userRole?
     const db = await getDatabase();
     const loans = db.collection<Loan>('loans');
 
-    // CFO can access any fund's loans
-    if (userRole === 'cfo') {
+    // CRO can access any fund's loans
+    if (userRole === 'cro') {
         return loans.find({ fundId: new ObjectId(fundId) }).toArray();
     }
 
@@ -82,8 +82,8 @@ export async function getLoanById(loanId: string, userId: string, userRole?: str
     const db = await getDatabase();
     const loans = db.collection<Loan>('loans');
 
-    // CFO can access any loan
-    if (userRole === 'cfo') {
+    // CRO can access any loan
+    if (userRole === 'cro') {
         return loans.findOne({ _id: new ObjectId(loanId) });
     }
 
@@ -95,7 +95,7 @@ export async function updateLoan(loanId: string, userId: string, updates: Partia
     const loans = db.collection<Loan>('loans');
 
     let filter;
-    if (userRole === 'cfo') {
+    if (userRole === 'cro') {
         filter = { _id: new ObjectId(loanId) };
     } else {
         filter = { _id: new ObjectId(loanId), userId: new ObjectId(userId) };
@@ -110,7 +110,7 @@ export async function deleteLoan(loanId: string, userId: string, userRole?: stri
     const loans = db.collection<Loan>('loans');
 
     let filter;
-    if (userRole === 'cfo') {
+    if (userRole === 'cro') {
         filter = { _id: new ObjectId(loanId) };
     } else {
         filter = { _id: new ObjectId(loanId), userId: new ObjectId(userId) };

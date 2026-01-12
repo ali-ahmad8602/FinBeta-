@@ -20,13 +20,13 @@ export async function GET(
             return NextResponse.json({ error: 'Fund not found' }, { status: 404 });
         }
 
-        // Log CFO access to other manager's funds
-        if (session.user.role === 'cfo' && fund.userId.toString() !== session.user.id) {
+        // Log CRO access to other manager's funds
+        if (session.user.role === 'cro' && fund.userId.toString() !== session.user.id) {
             const userInfo = getUserInfoForLog(session);
             await logActivity({
                 ...userInfo,
-                actionType: ActionTypes.CFO_OVERRIDE_FUND,
-                actionDescription: `CFO accessed fund: ${fund.name}`,
+                actionType: ActionTypes.CRO_OVERRIDE_FUND,
+                actionDescription: `CRO accessed fund: ${fund.name}`,
                 entityType: 'FUND',
                 entityId: id,
                 entityName: fund.name,
@@ -64,13 +64,13 @@ export async function PUT(
 
         // Log the update
         const userInfo = getUserInfoForLog(session);
-        const isCFOOverride = session.user.role === 'cfo' && fundInfo && fundInfo.userId !== session.user.id;
+        const isCFOOverride = session.user.role === 'cro' && fundInfo && fundInfo.userId !== session.user.id;
 
         await logActivity({
             ...userInfo,
-            actionType: isCFOOverride ? ActionTypes.CFO_OVERRIDE_FUND : ActionTypes.FUND_UPDATE,
+            actionType: isCFOOverride ? ActionTypes.CRO_OVERRIDE_FUND : ActionTypes.FUND_UPDATE,
             actionDescription: isCFOOverride
-                ? `CFO updated fund: ${fundInfo?.fundName}`
+                ? `CRO updated fund: ${fundInfo?.fundName}`
                 : `Updated fund: ${fundInfo?.fundName}`,
             entityType: 'FUND',
             entityId: id,
@@ -108,13 +108,13 @@ export async function DELETE(
 
         // Log the deletion
         const userInfo = getUserInfoForLog(session);
-        const isCFOOverride = session.user.role === 'cfo' && fundInfo && fundInfo.userId !== session.user.id;
+        const isCFOOverride = session.user.role === 'cro' && fundInfo && fundInfo.userId !== session.user.id;
 
         await logActivity({
             ...userInfo,
-            actionType: isCFOOverride ? ActionTypes.CFO_OVERRIDE_FUND : ActionTypes.FUND_DELETE,
+            actionType: isCFOOverride ? ActionTypes.CRO_OVERRIDE_FUND : ActionTypes.FUND_DELETE,
             actionDescription: isCFOOverride
-                ? `CFO deleted fund: ${fundInfo?.fundName}`
+                ? `CRO deleted fund: ${fundInfo?.fundName}`
                 : `Deleted fund: ${fundInfo?.fundName}`,
             entityType: 'FUND',
             entityId: id,

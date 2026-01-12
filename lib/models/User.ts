@@ -7,12 +7,12 @@ export interface User {
     email: string;
     password: string;
     name: string;
-    role: 'fund_manager' | 'cfo';
+    role: 'fund_manager' | 'cro';
     status: 'pending' | 'active' | 'rejected';
     createdAt: Date;
 }
 
-export async function createUser(email: string, password: string, name: string, role: 'fund_manager' | 'cfo' = 'fund_manager'): Promise<User> {
+export async function createUser(email: string, password: string, name: string, role: 'fund_manager' | 'cro' = 'fund_manager'): Promise<User> {
     const db = await getDatabase();
     const users = db.collection<User>('users');
 

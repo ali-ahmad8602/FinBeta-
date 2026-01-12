@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
         const fundId = searchParams.get('fundId');
 
         let loans;
-        if (session.user.role === 'cfo') {
+        if (session.user.role === 'cro') {
             loans = await getAllLoans();
         } else {
             loans = await getLoansByUserId(session.user.id);
@@ -46,15 +46,15 @@ export async function POST(request: NextRequest) {
         const fundInfo = await getFundOwnerInfo(body.fundId);
         const userInfo = getUserInfoForLog(session);
 
-        // Check if CFO is creating loan for another fund manager's fund
-        const isCFOOverride = session.user.role === 'cfo' && fundInfo && fundInfo.userId !== session.user.id;
+        // Check if CRO is creating loan for another fund manager's fund
+        const isCFOOverride = session.user.role === 'cro' && fundInfo && fundInfo.userId !== session.user.id;
 
         // Log loan creation
         await logActivity({
             ...userInfo,
-            actionType: isCFOOverride ? ActionTypes.CFO_OVERRIDE_LOAN : ActionTypes.LOAN_CREATE,
+            actionType: isCFOOverride ? ActionTypes.CRO_OVERRIDE_LOAN : ActionTypes.LOAN_CREATE,
             actionDescription: isCFOOverride
-                ? `CFO created loan for borrower: ${body.borrowerName} (${body.principal.toLocaleString()} at ${body.interestRate}%)`
+                ? `CRO created loan for borrower: ${body.borrowerName} (${body.principal.toLocaleString()} at ${body.interestRate}%)`
                 : `Created loan for borrower: ${body.borrowerName} (${body.principal.toLocaleString()} at ${body.interestRate}%)`,
             entityType: 'LOAN',
             entityId: loan._id?.toString(),

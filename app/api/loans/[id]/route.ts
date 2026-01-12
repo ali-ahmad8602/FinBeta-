@@ -20,15 +20,15 @@ export async function GET(
             return NextResponse.json({ error: 'Loan not found' }, { status: 404 });
         }
 
-        // Log CFO access to other manager's loans
-        if (session.user.role === 'cfo' && loan.userId.toString() !== session.user.id) {
+        // Log CRO access to other manager's loans
+        if (session.user.role === 'cro' && loan.userId.toString() !== session.user.id) {
             const userInfo = getUserInfoForLog(session);
             const fundInfo = await getFundOwnerInfo(loan.fundId.toString());
 
             await logActivity({
                 ...userInfo,
-                actionType: ActionTypes.CFO_OVERRIDE_LOAN,
-                actionDescription: `CFO accessed loan: ${loan.borrowerName}`,
+                actionType: ActionTypes.CRO_OVERRIDE_LOAN,
+                actionDescription: `CRO accessed loan: ${loan.borrowerName}`,
                 entityType: 'LOAN',
                 entityId: id,
                 entityName: loan.borrowerName,
@@ -83,13 +83,13 @@ export async function PUT(
             actionDescription = `Updated loan: ${existingLoan.borrowerName}`;
         }
 
-        // Check if CFO is overriding
-        const isCFOOverride = session.user.role === 'cfo' && existingLoan.userId.toString() !== session.user.id;
+        // Check if CRO is overriding
+        const isCFOOverride = session.user.role === 'cro' && existingLoan.userId.toString() !== session.user.id;
 
         await logActivity({
             ...userInfo,
-            actionType: isCFOOverride ? ActionTypes.CFO_OVERRIDE_LOAN : actionType,
-            actionDescription: isCFOOverride ? `CFO ${actionDescription.toLowerCase()}` : actionDescription,
+            actionType: isCFOOverride ? ActionTypes.CRO_OVERRIDE_LOAN : actionType,
+            actionDescription: isCFOOverride ? `CRO ${actionDescription.toLowerCase()}` : actionDescription,
             entityType: 'LOAN',
             entityId: id,
             entityName: existingLoan.borrowerName,
@@ -136,14 +136,14 @@ export async function DELETE(
         const fundInfo = await getFundOwnerInfo(existingLoan.fundId.toString());
         const userInfo = getUserInfoForLog(session);
 
-        // Check if CFO is overriding
-        const isCFOOverride = session.user.role === 'cfo' && existingLoan.userId.toString() !== session.user.id;
+        // Check if CRO is overriding
+        const isCFOOverride = session.user.role === 'cro' && existingLoan.userId.toString() !== session.user.id;
 
         await logActivity({
             ...userInfo,
-            actionType: isCFOOverride ? ActionTypes.CFO_OVERRIDE_LOAN : ActionTypes.LOAN_DELETE,
+            actionType: isCFOOverride ? ActionTypes.CRO_OVERRIDE_LOAN : ActionTypes.LOAN_DELETE,
             actionDescription: isCFOOverride
-                ? `CFO deleted loan: ${existingLoan.borrowerName}`
+                ? `CRO deleted loan: ${existingLoan.borrowerName}`
                 : `Deleted loan: ${existingLoan.borrowerName}`,
             entityType: 'LOAN',
             entityId: id,

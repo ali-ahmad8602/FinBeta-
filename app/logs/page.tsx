@@ -58,7 +58,7 @@ export default function LogsPage() {
         if (actionType.includes('CREATE')) return 'bg-green-100 text-green-700';
         if (actionType.includes('UPDATE')) return 'bg-blue-100 text-blue-700';
         if (actionType.includes('DELETE')) return 'bg-red-100 text-red-700';
-        if (actionType.includes('CFO_OVERRIDE')) return 'bg-purple-100 text-purple-700';
+        if (actionType.includes('CRO_OVERRIDE')) return 'bg-purple-100 text-purple-700';
         if (actionType.includes('DEFAULT')) return 'bg-orange-100 text-orange-700';
         return 'bg-gray-100 text-gray-700';
     };
@@ -100,8 +100,8 @@ export default function LogsPage() {
                         <option value="LOAN_UPDATE">Loan Updated</option>
                         <option value="LOAN_STATUS_CHANGE">Loan Status Changed</option>
                         <option value="LOAN_DELETE">Loan Deleted</option>
-                        <option value="CFO_OVERRIDE_FUND">CFO Override (Fund)</option>
-                        <option value="CFO_OVERRIDE_LOAN">CFO Override (Loan)</option>
+                        <option value="CRO_OVERRIDE_FUND">CRO Override (Fund)</option>
+                        <option value="CRO_OVERRIDE_LOAN">CRO Override (Loan)</option>
                     </select>
                 </div>
 
@@ -132,7 +132,7 @@ export default function LogsPage() {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-medium text-gray-900">{log.userName}</div>
                                                 <div className="text-xs text-gray-500">
-                                                    {log.userRole === 'CFO' ? 'CFO' : 'Fund Manager'}
+                                                    {log.userRole === 'CRO' ? 'CRO' : 'Fund Manager'}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
