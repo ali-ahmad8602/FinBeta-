@@ -167,7 +167,7 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
 
                     <div className="pt-2 border-t border-gray-100">
                         <div className="flex items-center gap-1">
-                            <p className="text-sm text-gray-500">Standalone Fee Income</p>
+                            <p className="text-sm text-gray-500">Processing Fee Income</p>
                             <InfoIcon content="Total processing fees collected upfront upon loan deployment. This revenue is distinct from interest yield." />
                         </div>
                         <p className="text-lg font-bold text-gray-900">{formatCurrency(metrics.totalProcessingFees)}</p>
@@ -191,8 +191,8 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
                         <div className="col-span-2 grid grid-cols-2 gap-4">
                             <div>
                                 <div className="flex items-center gap-1">
-                                    <p className="text-xs text-gray-500">Cost of Capital (Earned)</p>
-                                    <InfoIcon content="The portion of interest income that covers the Fund's Cost of Capital for deployed funds. This is 'earned' back when loans repay." />
+                                    <p className="text-xs text-gray-500">Cost of Capital (Accrued)</p>
+                                    <InfoIcon content="The portion of interest income that covers the Fund's Cost of Capital for deployed funds. This is 'accrued' over the loan tenure." />
                                 </div>
                                 <p className="text-sm font-medium text-gray-900">{formatCurrency(metrics.totalAllocatedCostOfCapital)}</p>
                             </div>
