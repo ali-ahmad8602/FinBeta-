@@ -43,30 +43,17 @@ export const LoanBuilder: React.FC<LoanBuilderProps> = ({ fund, onSave, onCancel
     // Fee Calculation
     const processingFeeAmount = principal * (processingFeeRate / 100);
 
-    // Expected Repayment (Terms Based)
+    // Expected Repayment (Terms Based) - EXCLUDES Processing Fee
     const expectedInterest = (principal * (interestRate / 100) * durationDays) / DAYS_IN_YEAR;
-    const expectedTotalRepayment = principal + expectedInterest + processingFeeAmount;
+    const expectedTotalRepayment = principal + expectedInterest;
 
     // Auto-Generate Schedule Effect
     useEffect(() => {
         if (!isCustomSchedule) {
-            // Updated generator function handling would go here, but for now we manually add fee
             const rawSchedule = generateRepaymentSchedule(principal, interestRate, startDate, durationDays, repaymentType);
-
-            // Distribute Fee Evenly
-            const feePerInstallment = processingFeeAmount / rawSchedule.length;
-
-            const scheduleWithFee = rawSchedule.map(item => ({
-                ...item,
-                amount: item.amount + feePerInstallment,
-                // Note: Interest component conceptually includes the fee for simple tracking, 
-                // or we could track separate feeComponent. For MVP, we just increase amount.
-                // To balance logic: Interest = Amount - Principal. If Amount goes up, implied return goes up.
-            }));
-
-            setScheduleItems(scheduleWithFee);
+            setScheduleItems(rawSchedule);
         }
-    }, [principal, interestRate, processingFeeRate, startDate, durationDays, repaymentType, isCustomSchedule, processingFeeAmount]);
+    }, [principal, interestRate, startDate, durationDays, repaymentType, isCustomSchedule]);
 
     // Metrics Effect
     useEffect(() => {
@@ -75,9 +62,9 @@ export const LoanBuilder: React.FC<LoanBuilderProps> = ({ fund, onSave, onCancel
         const total = allocatedCost + varCosts;
         const beAmount = principal + total; // Break Even doesn't include profit margin (fee is profit)
 
-        // Interest Income based on inputs (Projected) + Processing Fee
+        // Interest Income based on inputs (Projected Only) (FEE IS STANDALONE)
         const paramInterest = (principal * (interestRate / 100) * durationDays) / DAYS_IN_YEAR;
-        const totalRevenue = paramInterest + processingFeeAmount;
+        const totalRevenue = paramInterest;
 
         const ny = totalRevenue - total;
 
@@ -366,7 +353,7 @@ export const LoanBuilder: React.FC<LoanBuilderProps> = ({ fund, onSave, onCancel
                             {/* Total Repayment Display */}
                             <div className="pt-2 border-t border-gray-200 space-y-1">
                                 <div className="flex justify-between font-medium text-gray-500 text-xs">
-                                    <span>Target Repayment (Terms)</span>
+                                    <span>Target Repayment (Interest Only)</span>
                                     <span>${expectedTotalRepayment.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between font-bold text-gray-900">

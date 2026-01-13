@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { name, totalRaised, costOfCapitalRate } = body;
+        const { name, totalRaised, costOfCapitalRate, createdAt } = body;
 
         if (!name || totalRaised === undefined || costOfCapitalRate === undefined) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
             name,
             totalRaised,
             costOfCapitalRate,
-        });
+            createdAt: createdAt ? new Date(createdAt) : undefined
+        } as any);
 
         return NextResponse.json(fund, { status: 201 });
     } catch (error) {

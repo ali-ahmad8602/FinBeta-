@@ -30,6 +30,7 @@ export default function Dashboard() {
   const [newFundName, setNewFundName] = useState('');
   const [newFundAmount, setNewFundAmount] = useState('');
   const [newFundRate, setNewFundRate] = useState('14');
+  const [newFundDate, setNewFundDate] = useState(new Date().toISOString().split('T')[0]);
 
   const fetchManagers = () => {
     if (session?.user?.role === 'cro') {
@@ -49,7 +50,8 @@ export default function Dashboard() {
     await addFund({
       name: newFundName,
       totalRaised: Number(newFundAmount),
-      costOfCapitalRate: Number(newFundRate)
+      costOfCapitalRate: Number(newFundRate),
+      createdAt: newFundDate
     });
     setIsModalOpen(false);
     setNewFundName('');
@@ -399,8 +401,17 @@ export default function Dashboard() {
                   onFocus={(e) => e.target.style.borderColor = 'var(--primary-purple)'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                   placeholder="14"
-                  value={newFundRate}
-                  onChange={e => setNewFundRate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Inception Date</label>
+                <input
+                  type="date"
+                  required
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none"
+                  style={{ borderColor: 'var(--border-color)' }}
+                  value={newFundDate}
+                  onChange={e => setNewFundDate(e.target.value)}
                 />
               </div>
               <div className="flex gap-3 pt-4">

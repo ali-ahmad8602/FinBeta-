@@ -72,7 +72,12 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <div>
                     <h3 className="text-xl font-bold text-gray-900">{fund.name}</h3>
-                    <p className="text-sm text-gray-500">Cost of Capital: <span className="font-medium text-amber-600">{fund.costOfCapitalRate}% PA</span></p>
+                    <div className="flex items-center gap-3">
+                        {fund.createdAt && (
+                            <p className="text-xs text-gray-400 italic">Established {new Date(fund.createdAt).toLocaleDateString()}</p>
+                        )}
+                        <p className="text-xs text-gray-500 font-medium">CoC: <span className="text-amber-600">{fund.costOfCapitalRate}% PA</span></p>
+                    </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
@@ -150,8 +155,8 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
 
                     <div>
                         <div className="flex items-center gap-1">
-                            <p className="text-sm text-gray-500">IM Yield</p>
-                            <InfoIcon content={`The projected profit after all expenses and losses.\n\nFormula: Projected Income - Total Expenses - NPL Losses\n\nThis is a cash-basis calculation showing actual expected profit.`} />
+                            <p className="text-sm text-gray-500">Net Yield</p>
+                            <InfoIcon content={`Projected profit from Interest only, after expenses and losses.\n\nFormula: Interest Income - Total Expenses - NPL Losses\n\nProcessing fees are tracked separately and do not contribute to Yield.`} />
                         </div>
                         <div className="flex items-baseline gap-2">
                             <p className={`text-lg font-semibold ${metrics.netYield >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -160,11 +165,19 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
                         </div>
                     </div>
 
+                    <div className="pt-2 border-t border-gray-100">
+                        <div className="flex items-center gap-1">
+                            <p className="text-sm text-gray-500">Standalone Fee Income</p>
+                            <InfoIcon content="Total processing fees collected upfront upon loan deployment. This revenue is distinct from interest yield." />
+                        </div>
+                        <p className="text-lg font-bold text-gray-900">{formatCurrency(metrics.totalProcessingFees)}</p>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <div className="flex items-center gap-1">
-                                <p className="text-xs text-gray-500">Income</p>
-                                <InfoIcon content="Total projected interest income and fees from all loans." />
+                                <p className="text-xs text-gray-500">Interest Income</p>
+                                <InfoIcon content="Total projected interest income from all active/closed loans." />
                             </div>
                             <p className="text-sm font-medium text-gray-900">{formatCurrency(metrics.projectedIncome)}</p>
                         </div>
@@ -175,12 +188,21 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
                             </div>
                             <p className="text-sm font-medium text-red-500">{formatCurrency(metrics.totalExpenses)}</p>
                         </div>
-                        <div className="col-span-2">
-                            <div className="flex items-center gap-1">
-                                <p className="text-xs text-gray-500">Cost of Capital (Earned)</p>
-                                <InfoIcon content="The portion of interest income that covers the Fund's Cost of Capital. This is 'earned' back when loans repay." />
+                        <div className="col-span-2 grid grid-cols-2 gap-4">
+                            <div>
+                                <div className="flex items-center gap-1">
+                                    <p className="text-xs text-gray-500">Cost of Capital (Earned)</p>
+                                    <InfoIcon content="The portion of interest income that covers the Fund's Cost of Capital for deployed funds. This is 'earned' back when loans repay." />
+                                </div>
+                                <p className="text-sm font-medium text-gray-900">{formatCurrency(metrics.totalAllocatedCostOfCapital)}</p>
                             </div>
-                            <p className="text-sm font-medium text-gray-900">{formatCurrency(metrics.totalAllocatedCostOfCapital)}</p>
+                            <div>
+                                <div className="flex items-center gap-1">
+                                    <p className="text-xs text-gray-500">CoC (Undeployed)</p>
+                                    <InfoIcon content="The accumulated cost of capital for funds that remained undeployed since fund inception. Represents the total 'leakage' or loss from idle capital." />
+                                </div>
+                                <p className="text-sm font-medium text-amber-600">{formatCurrency(metrics.accumulatedUndeployedCost)}</p>
+                            </div>
                         </div>
                         <div className="col-span-2 pt-2 border-t border-gray-100 space-y-2">
                             <div className="flex justify-between items-center">
@@ -218,7 +240,7 @@ export const FundCard: React.FC<FundCardProps> = ({ fund, loans }) => {
                     <div>
                         <div className="flex items-center gap-1">
                             <p className="text-sm text-gray-500">NPL Volume</p>
-                            <InfoIcon content={`Non-Performing Loans - the total repayable amount lost to defaults.\n\nFormula: Sum of (Principal + Interest + Fees) for all defaulted loans.`} />
+                            <InfoIcon content={`Non-Performing Loans - the outstanding principal and interest lost to defaults.\n\nFormula: Sum of (Principal + Interest) for all defaulted loans. Processing fees are excluded as they are collected upfront.`} />
                         </div>
                         <p className="text-lg font-semibold text-gray-900">{formatCurrency(metrics.nplVolume)}</p>
                     </div>

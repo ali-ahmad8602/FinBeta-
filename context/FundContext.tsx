@@ -32,7 +32,11 @@ export const FundProvider = ({ children }: { children: ReactNode }) => {
         }
 
         try {
-            setLoading(true);
+            // Only show full-screen loading if we don't have data yet
+            if (funds.length === 0 && loans.length === 0) {
+                setLoading(true);
+            }
+
             const [fundsRes, loansRes] = await Promise.all([
                 fetch('/api/funds'),
                 fetch('/api/loans')

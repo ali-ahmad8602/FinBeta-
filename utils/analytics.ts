@@ -8,10 +8,13 @@ export interface FundMetrics {
     availableCapital: number;
     nplVolume: number;
     projectedIncome: number;
+    totalProcessingFees: number; // Standalone metric
     totalExpenses: number; // Cost of Capital + Variable Costs
     totalAllocatedCostOfCapital: number;
     totalUpfrontCostsDeployed: number; // New Metric
     nav: number; // New Metric
+    dailyAvailableCapitalCost: number; // Cost of undeployed capital per day
+    accumulatedUndeployedCost: number; // Total cost on undeployed since inception
     netYield: number;
     aum: number;
     portfolioIRR: number; // Percentage - Realized IRR (actual outcomes)
@@ -85,14 +88,78 @@ export const calculateFundMetrics = (fund: Fund, loans: Loan[]): FundMetrics => 
     // Available Capital: TotalRaised - NetDeployed - NetUpfrontCosts
     const availableCapital = fund.totalRaised - deployedCapital - netUpfrontCosts;
 
+    // ---------------------------------------------------------
+    // ACCUMULATED UNDEPLOYED CAPITAL COST
+    // ---------------------------------------------------------
+    let accumulatedUndeployedCost = 0;
+    const inceptionDate = new Date(fund.createdAt || (fundLoans.length > 0 ? fundLoans[0].startDate : new Date()));
+    inceptionDate.setHours(0, 0, 0, 0);
+
+    const events: { date: Date; change: number }[] = [];
+
+    // 1. Initial Capital Event
+    events.push({ date: inceptionDate, change: fund.totalRaised });
+
+    fundLoans.forEach(loan => {
+        const loanStart = new Date(loan.startDate);
+        loanStart.setHours(0, 0, 0, 0);
+
+        const upfrontCost = calculateVariableCosts(loan.principal, loan.variableCosts);
+
+        // 2. Deployment Event
+        events.push({ date: loanStart, change: -(loan.principal + upfrontCost) });
+
+        if (loan.repaymentType === 'MONTHLY' && loan.installments && loan.installments.length > 0) {
+            const numInst = loan.installments.length;
+            const principalReturn = loan.principal / numInst;
+            const costReturn = upfrontCost / numInst;
+
+            loan.installments.forEach(inst => {
+                const dueDate = new Date(inst.dueDate);
+                dueDate.setHours(0, 0, 0, 0);
+                // 3. Gradual Recovery
+                events.push({ date: dueDate, change: principalReturn + costReturn });
+            });
+        } else {
+            // BULLET - Recovery at end
+            const maturityDate = new Date(loanStart);
+            maturityDate.setDate(maturityDate.getDate() + loan.durationDays);
+            maturityDate.setHours(0, 0, 0, 0);
+            events.push({ date: maturityDate, change: loan.principal + upfrontCost });
+        }
+    });
+
+    // Sort events chronologically
+    events.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    let runningAvail = 0;
+    let lastDate = inceptionDate;
+
+    for (const event of events) {
+        if (event.date > today) break;
+
+        const periodDays = Math.max(0, Math.floor((event.date.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)));
+        if (periodDays > 0 && runningAvail > 0) {
+            accumulatedUndeployedCost += (runningAvail * (fund.costOfCapitalRate / 100) / 360) * periodDays;
+        }
+
+        runningAvail += event.change;
+        lastDate = event.date;
+    }
+
+    // Interval from last event to today
+    const finalDays = Math.max(0, Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)));
+    if (finalDays > 0 && runningAvail > 0) {
+        accumulatedUndeployedCost += (runningAvail * (fund.costOfCapitalRate / 100) / 360) * finalDays;
+    }
+
     const nplLoans = fundLoans.filter(l => l.status === 'DEFAULTED');
 
-    // NPL Volume now = Total Repayable (Principal + Interest + Fee)
+    // NPL Volume = Principal + Interest (FEE EXCLUDED PER USER REQUEST)
     const nplVolume = nplLoans.reduce((sum, loan) => {
         const days = loan.durationDays;
         const interest = calculateInterest(loan.principal, loan.interestRate, days);
-        const fee = loan.processingFeeRate ? (loan.principal * (loan.processingFeeRate / 100)) : 0;
-        return sum + loan.principal + interest + fee;
+        return sum + loan.principal + interest;
     }, 0);
 
     // Track Principal Loss separately for Net Yield consistency (Cash basis loss)
@@ -136,7 +203,7 @@ export const calculateFundMetrics = (fund: Fund, loans: Loan[]): FundMetrics => 
         // 2. Calculate Projected Income on *Active* Principal only
         // If defaultedAmount == principal (Full Default), activePrincipal is 0, so Interest is 0.
         const interestIncome = calculateInterest(activePrincipal, loan.interestRate, days);
-        const processingFee = (loan.processingFeeRate && loan.status !== 'DEFAULTED') ? (loan.principal * (loan.processingFeeRate / 100)) : 0;
+        // Processing fee is now standalone, excluded from interestIncome/Net Yield logic here
 
         // 3. Expense Logic
         // Base Expenses: Allocated Cost + Variable Costs
@@ -147,7 +214,7 @@ export const calculateFundMetrics = (fund: Fund, loans: Loan[]): FundMetrics => 
         // we simply don't get the income, and we lose the capital.
         // loanExpenses += defaultedAmount; // REMOVED as per request to keep Expenses separate from NPL losses
 
-        projectedIncome += interestIncome + processingFee;
+        projectedIncome += interestIncome;
         totalAllocatedExpenses += loanExpenses;
 
         // Only include in "Allocated Cost (Deployed)" metric if NOT defaulted
@@ -213,10 +280,13 @@ export const calculateFundMetrics = (fund: Fund, loans: Loan[]): FundMetrics => 
         availableCapital,
         nplVolume,
         projectedIncome,
+        totalProcessingFees: fundLoans.reduce((sum, l) => sum + (l.processingFeeRate ? (l.principal * (l.processingFeeRate / 100)) : 0), 0),
         totalExpenses: totalAllocatedExpenses,
         totalAllocatedCostOfCapital,
         totalUpfrontCostsDeployed: totalUpfrontVariableCosts,
         nav: fund.totalRaised + totalAllocatedCostOfCapital - nplPrincipalLoss,
+        dailyAvailableCapitalCost: (availableCapital * (fund.costOfCapitalRate / 100)) / 360,
+        accumulatedUndeployedCost,
         netYield,
         aum: fund.totalRaised + totalAllocatedCostOfCapital + netYield, // User Formula: Raised + Deployed Cost + Net Yield
         nplRatio,
@@ -269,9 +339,8 @@ export const calculateRealizedImYield = (fund: Fund, loans: Loan[]): number => {
         const totalInterest = calculateInterest(loan.principal, loan.interestRate, loan.durationDays);
         const processingFee = loan.processingFeeRate ? (loan.principal * (loan.processingFeeRate / 100)) : 0;
 
-        // Yield = Interest + Fee - (VarCosts + CoC)
-        // Or in terms of Repayment: (Principal + Interest + Fee) - (Principal + VarCosts + CoC)
-        const totalIncome = totalInterest + processingFee;
+        // Yield = Interest - (VarCosts + CoC) (ISOLATED FEE)
+        const totalIncome = totalInterest;
 
         const totalVarCosts = calculateVariableCosts(loan.principal, loan.variableCosts);
         const totalCoC = calculateAllocatedCostOfCapital(loan.principal, fund.costOfCapitalRate, loan.durationDays);

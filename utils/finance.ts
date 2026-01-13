@@ -108,6 +108,7 @@ export const generateRepaymentSchedule = (
     const totalInterest = (principal * (annualRate / 100) * durationDays) / DAYS_IN_YEAR;
 
     // Distribute principal and interest evenly across all installments
+    // NOTE: Processing fee is collected upfront and excluded from here
     const principalPerMonth = principal / months;
     const interestPerMonth = totalInterest / months;
     const totalPerMonth = principalPerMonth + interestPerMonth;
@@ -157,26 +158,23 @@ export const calculateLoanIRR = (
   const cashFlows: CashFlow[] = [];
   const loanStartDate = new Date(startDate);
 
-  // Initial outflow: -Principal on start date
+  // Initial outflow: -Principal (FEE IS EXCLUDED FROM IRR)
   cashFlows.push({
     amount: -principal,
     date: loanStartDate
   });
-
-  // Calculate processing fee (income)
-  const processingFee = principal * (processingFeeRate / 100);
 
   // Use installment DATES if provided, but regenerate amounts using FLAT INTEREST
   if (installments && installments.length > 0 && repaymentType === 'MONTHLY') {
     // Calculate TOTAL interest for the full loan term (Flat Interest)
     const totalInterest = (principal * (interestRate / 100) * durationDays) / DAYS_IN_YEAR;
 
-    // Distribute principal, interest, and fee evenly across all installments
+    // Distribute principal and interest evenly across all installments
+    // FEE IS EXCLUDED from future installments
     const numInstallments = installments.length;
     const principalPerInstallment = principal / numInstallments;
     const interestPerInstallment = totalInterest / numInstallments;
-    const feePerInstallment = processingFee / numInstallments;
-    const totalPerInstallment = principalPerInstallment + interestPerInstallment + feePerInstallment;
+    const totalPerInstallment = principalPerInstallment + interestPerInstallment;
 
     // Use stored dates, but regenerated flat amounts
     installments.forEach((inst) => {
@@ -188,9 +186,9 @@ export const calculateLoanIRR = (
   } else {
     // Generate schedule based on repayment type
     if (repaymentType === 'BULLET') {
-      // Single payment at end
+      // Single payment at end (Principal + Interest)
       const interest = calculateInterest(principal, interestRate, durationDays);
-      const totalRepayable = principal + interest + processingFee;
+      const totalRepayable = principal + interest;
       const dueDate = new Date(loanStartDate);
       dueDate.setDate(dueDate.getDate() + durationDays);
 
@@ -205,11 +203,10 @@ export const calculateLoanIRR = (
       // Calculate TOTAL interest for the full loan term (Flat Interest)
       const totalInterest = (principal * (interestRate / 100) * durationDays) / DAYS_IN_YEAR;
 
-      // Distribute principal, interest, and fee evenly
+      // Distribute principal and interest evenly
       const principalPerMonth = principal / months;
       const interestPerMonth = totalInterest / months;
-      const feePerMonth = processingFee / months;
-      const totalPerMonth = principalPerMonth + interestPerMonth + feePerMonth;
+      const totalPerMonth = principalPerMonth + interestPerMonth;
 
       for (let i = 1; i <= months; i++) {
         const dueDate = new Date(loanStartDate);
@@ -256,12 +253,10 @@ export const calculateLoanNetIRR = (
   const cashFlows: CashFlow[] = [];
   const loanStartDate = new Date(startDate);
 
-  // Calculate costs
+  // Calculate costs and fee
   const totalVariableCost = calculateVariableCosts(principal, variableCosts);
   const allocatedCostOfCapital = calculateAllocatedCostOfCapital(principal, costOfCapitalRate, durationDays);
-  const processingFee = principal * (processingFeeRate / 100);
-
-  // Initial outflow: -Principal - Variable Costs (upfront costs)
+  // Initial outflow: -Principal - Variable Costs (FEE IS EXCLUDED FROM IRR)
   cashFlows.push({
     amount: -(principal + totalVariableCost),
     date: loanStartDate
@@ -272,15 +267,15 @@ export const calculateLoanNetIRR = (
     // Calculate TOTAL interest for the full loan term (Flat Interest)
     const totalInterest = (principal * (interestRate / 100) * durationDays) / DAYS_IN_YEAR;
 
-    // Distribute principal, interest, fee, and cost of capital evenly
+    // Distribute principal, interest, and cost of capital evenly
     const numInstallments = installments.length;
     const principalPerInstallment = principal / numInstallments;
     const interestPerInstallment = totalInterest / numInstallments;
-    const feePerInstallment = processingFee / numInstallments;
     const costOfCapitalPerInstallment = allocatedCostOfCapital / numInstallments;
 
-    // Net payment = Principal + Interest + Fee - Cost of Capital
-    const netPerInstallment = principalPerInstallment + interestPerInstallment + feePerInstallment - costOfCapitalPerInstallment;
+    // Net payment = Principal + Interest - Cost of Capital
+    // FEE IS EXCLUDED from future installments
+    const netPerInstallment = principalPerInstallment + interestPerInstallment - costOfCapitalPerInstallment;
 
     // Use stored dates, but regenerated flat net amounts
     installments.forEach((inst) => {
@@ -293,8 +288,8 @@ export const calculateLoanNetIRR = (
     // Generate schedule based on repayment type
     if (repaymentType === 'BULLET') {
       const interest = calculateInterest(principal, interestRate, durationDays);
-      // Net repayment = Principal + Interest + Fee - Cost of Capital
-      const netRepayable = principal + interest + processingFee - allocatedCostOfCapital;
+      // Net repayment = Principal + Interest - Cost of Capital
+      const netRepayable = principal + interest - allocatedCostOfCapital;
       const dueDate = new Date(loanStartDate);
       dueDate.setDate(dueDate.getDate() + durationDays);
 
@@ -309,14 +304,13 @@ export const calculateLoanNetIRR = (
       // Calculate TOTAL interest for the full loan term (Flat Interest)
       const totalInterest = (principal * (interestRate / 100) * durationDays) / DAYS_IN_YEAR;
 
-      // Distribute principal, interest, fee, and cost of capital evenly
+      // Distribute principal, interest, and cost of capital evenly
       const principalPerMonth = principal / months;
       const interestPerMonth = totalInterest / months;
-      const feePerMonth = processingFee / months;
       const costOfCapitalPerMonth = allocatedCostOfCapital / months;
 
-      // Net payment = Principal + Interest + Fee - Cost of Capital
-      const netPerMonth = principalPerMonth + interestPerMonth + feePerMonth - costOfCapitalPerMonth;
+      // Net payment = Principal + Interest - Cost of Capital
+      const netPerMonth = principalPerMonth + interestPerMonth - costOfCapitalPerMonth;
 
       for (let i = 1; i <= months; i++) {
         const dueDate = new Date(loanStartDate);

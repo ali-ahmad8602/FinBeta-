@@ -38,4 +38,5 @@ export interface Fund {
     name: string;
     totalRaised: number;
     costOfCapitalRate: number; // % PA
+    createdAt: string; // ISO Date
 }

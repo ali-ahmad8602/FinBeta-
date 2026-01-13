@@ -57,9 +57,8 @@ export function getAllRepaymentEvents(loans: Loan[], fund: Fund): CashFlowEvent[
 
                     // WATERFALL LOGIC for Future Events
                     const totalInterest = calculateInterest(loan.principal, loan.interestRate, loan.durationDays);
-                    const processingFee = loan.processingFeeRate ? (loan.principal * (loan.processingFeeRate / 100)) : 0;
-
-                    const totalExpectedRepayment = loan.principal + totalInterest + processingFee;
+                    // NOTE: Processing fee is collected upfront, so it's NOT included in total expected repayment
+                    const totalExpectedRepayment = loan.principal + totalInterest;
                     const totalAllocatedCoC = calculateAllocatedCostOfCapital(loan.principal, fund.costOfCapitalRate, loan.durationDays);
                     const totalVarCosts = calculateVariableCosts(loan.principal, loan.variableCosts);
                     const totalBreakEven = loan.principal + totalVarCosts + totalAllocatedCoC;
@@ -72,13 +71,9 @@ export function getAllRepaymentEvents(loans: Loan[], fund: Fund): CashFlowEvent[
                     }
 
                     // Determine how much of this installment covers break-even components
-                    // If it's the last installment, we remove the yield part first.
-                    // Note: This logic assumes the Yield is paid at the END.
-
                     const amountForBreakEven = inst.amount - imYieldInThisEvent;
 
                     // Distribute amountForBreakEven proportionally to Principal, VarCost, CoC
-                    // The ratio is based on the TOTAL expected costs.
                     const principalRatio = loan.principal / totalBreakEven;
                     const varCostRatio = totalVarCosts / totalBreakEven;
                     const cocRatio = totalAllocatedCoC / totalBreakEven;
@@ -112,9 +107,8 @@ export function getAllRepaymentEvents(loans: Loan[], fund: Fund): CashFlowEvent[
             // Only include if maturity is in the future
             if (maturityDate >= today) {
                 const totalInterest = calculateInterest(loan.principal, loan.interestRate, loan.durationDays);
-                const processingFee = loan.processingFeeRate ? (loan.principal * (loan.processingFeeRate / 100)) : 0;
-
-                const totalRepayment = loan.principal + totalInterest + processingFee;
+                // NOTE: Processing fee is excluded from repayment
+                const totalRepayment = loan.principal + totalInterest;
 
                 const totalVarCost = calculateVariableCosts(loan.principal, loan.variableCosts);
                 const totalAllocatedCoC = calculateAllocatedCostOfCapital(loan.principal, fund.costOfCapitalRate, loan.durationDays);
@@ -166,7 +160,7 @@ export function calculateCashFlowForecast(
         .filter(l => l.status === 'ACTIVE' || l.status === 'DEFAULTED')
         .reduce((sum, l) => sum + calculateVariableCosts(l.principal, l.variableCosts), 0);
 
-    // Initial Available: Total - Deployed - VarCosts
+    // Initial Available: Total - Deployed - VarCosts (PROCESSING FEES EXCLUDED PER USER REQUEST)
     let runningAvailable = fund.totalRaised - deployedCapital - activeTotalVarCosts;
     const initialAvailable = runningAvailable;
 

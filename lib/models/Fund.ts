@@ -17,7 +17,7 @@ export async function createFund(userId: string, fundData: Omit<Fund, '_id' | 'u
     const fund: Fund = {
         userId: new ObjectId(userId),
         ...fundData,
-        createdAt: new Date()
+        createdAt: (fundData as any).createdAt instanceof Date ? (fundData as any).createdAt : new Date()
     };
 
     const result = await funds.insertOne(fund);
